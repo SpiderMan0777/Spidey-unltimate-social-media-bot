@@ -22,8 +22,7 @@ bot = Client(
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN,
-    workdir="./",  # Set workdir to ensure session files are saved in the right place
-    timeout=30     # Increased timeout to handle slow network responses
+    workdir="./"  # Set workdir to ensure session files are saved in the right place
 )
 
 # Ensure 'downloads' directory exists
@@ -229,3 +228,4 @@ if __name__ == "__main__":
         bot.run()
     except Exception as e:
         logging.critical(f"Bot failed to start: {e}")
+                          
