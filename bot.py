@@ -7,7 +7,7 @@ import time
 # Bot Configuration
 API_ID = 28519661  # Replace with your API ID
 API_HASH = "d47c74c8a596fd3048955b322304109d"  # Replace with your API Hash
-BOT_TOKEN = ""  # Replace with your bot token
+BOT_TOKEN = "7620991709:AAEaPfZWjauYBN5zU1d64RYiwqPPiM-3gjA"  # Replace with your bot token
 
 bot = Client("powerful_media_downloader_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
