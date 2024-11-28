@@ -5,10 +5,16 @@ entrypoint = "bot.py"
 [deployment]
 run = ["python3", "bot.py"]
 
-# Optionally, specify environment variables
+# Specify environment variables (replace with your actual values)
 [run.env]
-# Replace with your actual bot token or other environment variables
 BOT_TOKEN = "7620991709:AAEaPfZWjauYBN5zU1d64RYiwqPPiM-3gjA"
-API_ID=28519661
-API_HASH=d47c74c8a596fd3048955b322304109d
+API_ID = "28519661"
+API_HASH = "d47c74c8a596fd3048955b322304109d"
 
+# Optionally, you can define dependencies (if needed) for your project
+[tool.poetry.dependencies]
+python = "^3.9"  # Use appropriate Python version based on your environment
+
+# External dependencies
+pyrogram = "^2.0.106"
+yt-dlp = "^2023.01.06"
