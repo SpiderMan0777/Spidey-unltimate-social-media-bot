@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: powerful-media-downloader-bot
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python3 bot.py"
+    plan: free  # Use the free tier or upgrade if needed
+    envVars:
+      - key: BOT_TOKEN
+        value: "7620991709:AAEaPfZWjauYBN5zU1d64RYiwqPPiM-3gjA"
+      - key: API_ID
+        value: "28519661"
+      - key: API_HASH
+        value: "d47c74c8a596fd3048955b322304109d"
