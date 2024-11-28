@@ -5,3 +5,5 @@ python-dotenv
 rich
 asyncio
 instaloader
+python-telegram-bot
+requests
