@@ -3,6 +3,14 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from yt_dlp import YoutubeDL
 import os
 import time
+import logging
+
+# Setup logging to track errors in Replit
+logging.basicConfig(
+    format="%(asctime)s - %(message)s",
+    level=logging.INFO,
+    handlers=[logging.StreamHandler()]
+)
 
 # Bot Configuration
 API_ID = 28519661  # Replace with your API ID
@@ -21,10 +29,10 @@ class MyLogger:
         pass
 
     def warning(self, msg):
-        print(f"WARNING: {msg}")
+        logging.warning(msg)
 
     def error(self, msg):
-        print(f"ERROR: {msg}")
+        logging.error(msg)
 
 
 # YT-DLP Options
@@ -85,7 +93,7 @@ async def start(client, message):
     user_id = message.from_user.id
 
     # Log the user's name and ID
-    print(f"{user_name} (ID: {user_id}) started the bot.")
+    logging.info(f"{user_name} (ID: {user_id}) started the bot.")
     
     # Update user statistics
     user_statistics[user_id] = user_statistics.get(user_id, 0) + 1
@@ -125,7 +133,8 @@ async def download_handler(client, message):
     if not url.startswith(("http://", "https://")):
         await message.reply_text("❌ Please send a valid URL. Make sure it starts with http:// or https://.")
         return
-      # Alternate between 🚀 and ⚡ for each new URL
+    
+    # Alternate between 🚀 and ⚡ for each new URL
     temp_emoji = "🚀" if emoji_toggle % 2 == 0 else "⚡"
     emoji_toggle += 1
 
@@ -147,6 +156,7 @@ async def download_handler(client, message):
             os.remove(video_file)
 
     except Exception as e:
+        logging.error(f"Error downloading video: {e}")
         await message.reply_text(f"❌ **Failed to download video:** {str(e)}")
 
     # Update user statistics
@@ -185,6 +195,7 @@ async def download_audio(client, message):
             os.remove(audio_file)
 
     except Exception as e:
+        logging.error(f"Error downloading MP3: {e}")
         await message.reply_text(f"❌ **Failed to download MP3:** {str(e)}")
 
 
@@ -201,6 +212,15 @@ async def view_statistics(client, message):
     stats = "\n".join([f"User ID: {uid} | Interactions: {count}" for uid, count in user_statistics.items()])
     stats_message = f"📊 **User Statistics:**\n\n{stats if stats else 'No interactions yet.'}"
     await message.reply_text(stats_message)
+
+
+# Error handling for Replit
+@bot.on_callback_query()
+async def handle_callback(client, callback_query):
+    try:
+        await callback_query.answer()
+    except Exception as e:
+        logging.error(f"Error handling callback query: {e}")
 
 
 # Bot Run
