@@ -16,6 +16,10 @@ API_ID = 28519661  # Replace with your API ID
 API_HASH = "d47c74c8a596fd3048955b322304109d"  # Replace with your API Hash
 BOT_TOKEN = "7620991709:AAEaPfZWjauYBN5zU1d64RYiwqPPiM-3gjA"  # Replace with your bot token
 
+# Ensure 'downloads' directory exists
+if not os.path.exists("downloads"):
+    os.makedirs("downloads")
+
 # Create the bot client
 bot = Client(
     "powerful_media_downloader_bot",
@@ -24,10 +28,6 @@ bot = Client(
     bot_token=BOT_TOKEN,
     workdir="./"  # Set workdir to ensure session files are saved in the right place
 )
-
-# Ensure 'downloads' directory exists
-if not os.path.exists("downloads"):
-    os.makedirs("downloads")
 
 # Custom logger for yt-dlp
 class MyLogger:
@@ -61,12 +61,6 @@ ydl_opts_audio = {
     ],
 }
 
-# Emoji toggling for user interactions
-emoji_toggle = 0  # Tracks which emoji to display
-
-# User Statistics to track interactions
-user_statistics = {}
-
 # Function to generate inline buttons
 def generate_buttons():
     return InlineKeyboardMarkup([
@@ -98,9 +92,6 @@ async def start(client, message):
     # Log user interaction
     logging.info(f"User {user_name} (ID: {user_id}) started the bot.")
     
-    # Update user statistics
-    user_statistics[user_id] = user_statistics.get(user_id, 0) + 1
-
     # Send welcome message with image and buttons
     await message.reply_photo(
         photo="https://i.ibb.co/dt3C6pq/6744c613.jpg",  # Replace with your image URL
@@ -128,22 +119,14 @@ async def help_command(client, message):
 # General URL Handler - Downloads video or audio based on user input
 @bot.on_message(filters.text & filters.private)
 async def download_handler(client, message):
-    global emoji_toggle
     url = message.text.strip()
-    user_id = message.from_user.id
 
     if not url.startswith(("http://", "https://")):
         await message.reply_text("❌ Please send a valid URL. Make sure it starts with http:// or https://.")
         return
-    
-    # Alternate emoji display for fun feedback
-    temp_emoji = "🚀" if emoji_toggle % 2 == 0 else "⚡"
-    emoji_toggle += 1
 
     # Send a processing message
-    progress_msg = await message.reply_text(temp_emoji)
-    time.sleep(2)
-    await progress_msg.edit_text("🔄 **Processing your request... Please wait!**")
+    progress_msg = await message.reply_text("🔄 **Processing your request... Please wait!**")
 
     try:
         # Download video
@@ -161,27 +144,17 @@ async def download_handler(client, message):
         logging.error(f"Error downloading video: {e}")
         await message.reply_text(f"❌ **Failed to download video:** {str(e)}")
 
-    # Update user statistics
-    user_statistics[user_id] = user_statistics.get(user_id, 0) + 1
-
 # Download MP3 Command - Extracts and sends audio from a YouTube video
 @bot.on_message(filters.command("mp3") & filters.private)
 async def download_audio(client, message):
-    global emoji_toggle
     url = message.text.split(" ", 1)[-1].strip()
 
     if not url.startswith(("http://", "https://")):
         await message.reply_text("❌ Please send a valid URL. Make sure it starts with http:// or https://.")
         return
 
-    # Alternate emoji for feedback
-    temp_emoji = "🚀" if emoji_toggle % 2 == 0 else "⚡"
-    emoji_toggle += 1
-
     # Send a processing message
-    progress_msg = await message.reply_text(temp_emoji)
-    time.sleep(2)
-    await progress_msg.edit_text("🎵 **Processing your MP3 request... Please wait!**")
+    progress_msg = await message.reply_text("🎵 **Processing your MP3 request... Please wait!**")
 
     try:
         # Download audio
@@ -199,33 +172,10 @@ async def download_audio(client, message):
         logging.error(f"Error downloading MP3: {e}")
         await message.reply_text(f"❌ **Failed to download MP3:** {str(e)}")
 
-# Admin-only Statistics Command - Displays user interaction statistics
-@bot.on_message(filters.command("statics") & filters.private)
-async def view_statistics(client, message):
-    admin_id = 123456789  # Replace with your Telegram ID
-    user_id = message.from_user.id
-
-    if user_id != admin_id:
-        await message.reply_text("❌ You are not authorized to view statistics.")
-        return
-
-    stats = "\n".join([f"User ID: {uid} | Interactions: {count}" for uid, count in user_statistics.items()])
-    stats_message = f"📊 **User Statistics:**\n\n{stats if stats else 'No interactions yet.'}"
-    await message.reply_text(stats_message)
-
-# Error Handling for Callback Queries
-@bot.on_callback_query()
-async def handle_callback(client, callback_query):
-    try:
-        await callback_query.answer()
-    except Exception as e:
-        logging.error(f"Error handling callback query: {e}")
-
 # Run the bot
 if __name__ == "__main__":
     try:
         logging.info("🚀 Bot is starting...")
-        bot.run()
+        bot.run()  # Start the bot
     except Exception as e:
         logging.critical(f"Bot failed to start: {e}")
-                          
