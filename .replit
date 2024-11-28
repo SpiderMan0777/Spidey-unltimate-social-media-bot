@@ -9,3 +9,6 @@ run = ["python3", "bot.py"]
 [run.env]
 # Replace with your actual bot token or other environment variables
 BOT_TOKEN = "7620991709:AAEaPfZWjauYBN5zU1d64RYiwqPPiM-3gjA"
+API_ID=28519661
+API_HASH=d47c74c8a596fd3048955b322304109d
+
