@@ -1,67 +1,66 @@
 import os
 import time
+import random
 import logging
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from yt_dlp import YoutubeDL
 
-# Initialize logging for better debugging
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    level=logging.INFO
+# Set up logging to track errors and actions
+logging.basicConfig(level=logging.INFO)
+
+# Replit uses environment variables for sensitive info, so we retrieve them from there
+API_ID = os.environ.get("API_ID")  # Set this in Replit secrets
+API_HASH = os.environ.get("API_HASH")  # Set this in Replit secrets
+BOT_TOKEN = os.environ.get("BOT_TOKEN")  # Set this in Replit secrets
+
+# Bot client initialization
+bot = Client(
+    "powerful_media_downloader_bot",
+    api_id=int(API_ID),
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN
 )
 
-# Bot Configuration
-API_ID = 28519661  # Replace with your API ID
-API_HASH = "d47c74c8a596fd3048955b322304109d"  # Replace with your API Hash
-BOT_TOKEN = "7620991709:AAEaPfZWjauYBN5zU1d64RYiwqPPiM-3gjA"  # Replace with your bot token
-
-# Ensure 'downloads' directory exists
+# Ensure the 'downloads' directory exists (for saving media files)
 if not os.path.exists("downloads"):
     os.makedirs("downloads")
 
-# Create the bot client
-bot = Client(
-    "powerful_media_downloader_bot",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN,
-    workdir="./"  # Set workdir to ensure session files are saved in the right place
-)
-
-# Custom logger for yt-dlp
+# Logger class for yt-dlp to handle video/audio download logs
 class MyLogger:
     def debug(self, msg):
-        pass
+        pass  # Ignore debug messages
 
     def warning(self, msg):
-        logging.warning(msg)
+        logging.warning(f"WARNING: {msg}")
 
     def error(self, msg):
-        logging.error(msg)
+        logging.error(f"ERROR: {msg}")
 
-# yt-dlp Options for Video and Audio
+# yt-dlp options for downloading videos
 ydl_opts_video = {
-    "format": "bestvideo+bestaudio/best",
-    "outtmpl": "downloads/%(title)s.%(ext)s",
+    "format": "bestvideo+bestaudio/best",  # Get the best quality video + audio
+    "outtmpl": "downloads/%(title)s.%(ext)s",  # Downloaded file template
     "quiet": True,
-    "logger": MyLogger(),
+    "logger": MyLogger(),  # Use custom logger
 }
 
+# yt-dlp options for downloading audio in MP3 format
 ydl_opts_audio = {
     "format": "bestaudio/best",
     "outtmpl": "downloads/%(title)s.%(ext)s",
     "quiet": True,
-    "postprocessors": [
-        {
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "320",
-        }
-    ],
+    "postprocessors": [{
+        "key": "FFmpegExtractAudio",
+        "preferredcodec": "mp3",
+        "preferredquality": "320",
+    }],
 }
 
-# Function to generate inline buttons
+# Emoji toggle for alternating between two emojis
+emoji_toggle = 0  # Tracks which emoji to display
+
+# Stylish Inline Buttons (for user interaction)
 def generate_buttons():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🔔 Subscribe to Our Channel", url="https://t.me/your_channel")],
@@ -72,7 +71,7 @@ def generate_buttons():
         [InlineKeyboardButton("Explore Our Bots", url="https://t.me/more_bots")]
     ])
 
-# Function to generate welcome message buttons
+# Welcome buttons for /start message
 def generate_welcome_buttons():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🔔 Subscribe to Our Channel", url="https://t.me/your_channel")],
@@ -83,20 +82,14 @@ def generate_welcome_buttons():
         [InlineKeyboardButton("Explore Our Bots", url="https://t.me/more_bots")],
     ])
 
-# Start Command - Displays a welcome message with image and buttons
+# Welcome command (/start)
 @bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     user_name = message.from_user.first_name
-    user_id = message.from_user.id
-
-    # Log user interaction
-    logging.info(f"User {user_name} (ID: {user_id}) started the bot.")
-    
-    # Send welcome message with image and buttons
     await message.reply_photo(
         photo="https://i.ibb.co/dt3C6pq/6744c613.jpg",  # Replace with your image URL
         caption=(
-            "👋 **Welcome to the Ultimate Media Downloader Bot!**\n\n"
+            f"👋 **Welcome {user_name} to the Ultimate Media Downloader Bot!**\n\n"
             "🎥 Download videos in the highest quality.\n\n"
             "✨ Simply send me any YouTube, Instagram, or Facebook link and let me handle the rest!\n\n"
             "**__Powered by: @Hacker_x_official_777__**"
@@ -104,60 +97,61 @@ async def start(client, message):
         reply_markup=generate_welcome_buttons()
     )
 
-# Help Command - Provides bot instructions
-@bot.on_message(filters.command("help") & filters.private)
-async def help_command(client, message):
-    help_text = (
-        "**🤖 Bot Commands and Features:**\n\n"
-        "/start - Welcome message\n"
-        "/mp3 - Download MP3 from YouTube\n"
-        "/statics - Admin-only: View user statistics\n\n"
-        "💡 *Simply send any YouTube, Instagram, or Facebook link to download videos or audio.*"
-    )
-    await message.reply_text(help_text, reply_markup=generate_buttons())
-
-# General URL Handler - Downloads video or audio based on user input
+# General URL handler for downloading video/audio
 @bot.on_message(filters.text & filters.private)
 async def download_handler(client, message):
+    global emoji_toggle
     url = message.text.strip()
 
     if not url.startswith(("http://", "https://")):
-        await message.reply_text("❌ Please send a valid URL. Make sure it starts with http:// or https://.")
+        await message.reply_text("❌ Please send a valid URL that starts with http:// or https://.")
         return
 
-    # Send a processing message
-    progress_msg = await message.reply_text("🔄 **Processing your request... Please wait!**")
+    # Alternate between 🚀 and ⚡ emojis
+    temp_emoji = "🚀" if emoji_toggle % 2 == 0 else "⚡"
+    emoji_toggle += 1
+
+    # Send temporary emoji and update after 2 seconds
+    progress_msg = await message.reply_text(temp_emoji)
+    time.sleep(2)
+    await progress_msg.edit_text("🔄 **Processing your request... Please wait!**")
 
     try:
-        # Download video
+        # Download the video
         with YoutubeDL(ydl_opts_video) as ydl:
             info = ydl.extract_info(url, download=True)
             video_file = ydl.prepare_filename(info)
             await message.reply_video(
                 video_file,
-                caption=f"🎥 **{info.get('title', 'Untitled')}**\n\n✅ Your video is ready to watch or share!\n\n**__Powered by: @Hacker_x_official_777__**",
+                caption=f"🎥 **{info.get('title', 'Untitled')}**\n\n✅ Your video is ready to watch or share!",
                 reply_markup=generate_buttons()
             )
-            os.remove(video_file)
+            os.remove(video_file)  # Clean up by deleting the downloaded video file
 
     except Exception as e:
-        logging.error(f"Error downloading video: {e}")
         await message.reply_text(f"❌ **Failed to download video:** {str(e)}")
 
-# Download MP3 Command - Extracts and sends audio from a YouTube video
+# MP3 download command
 @bot.on_message(filters.command("mp3") & filters.private)
 async def download_audio(client, message):
+    global emoji_toggle
     url = message.text.split(" ", 1)[-1].strip()
 
     if not url.startswith(("http://", "https://")):
-        await message.reply_text("❌ Please send a valid URL. Make sure it starts with http:// or https://.")
+        await message.reply_text("❌ Please send a valid URL that starts with http:// or https://.")
         return
 
-    # Send a processing message
-    progress_msg = await message.reply_text("🎵 **Processing your MP3 request... Please wait!**")
+    # Alternate between 🚀 and ⚡ emojis
+    temp_emoji = "🚀" if emoji_toggle % 2 == 0 else "⚡"
+    emoji_toggle += 1
+
+    # Send temporary emoji and update after 2 seconds
+    progress_msg = await message.reply_text(temp_emoji)
+    time.sleep(2)
+    await progress_msg.edit_text("🎵 **Processing your MP3 request... Please wait!**")
 
     try:
-        # Download audio
+        # Download the audio
         with YoutubeDL(ydl_opts_audio) as ydl:
             info = ydl.extract_info(url, download=True)
             audio_file = ydl.prepare_filename(info)
@@ -166,16 +160,11 @@ async def download_audio(client, message):
                 caption=f"🎶 **{info.get('title', 'Untitled')}**\n\n🎧 Enjoy your high-quality MP3!",
                 reply_markup=generate_buttons()
             )
-            os.remove(audio_file)
+            os.remove(audio_file)  # Clean up by deleting the downloaded audio file
 
     except Exception as e:
-        logging.error(f"Error downloading MP3: {e}")
         await message.reply_text(f"❌ **Failed to download MP3:** {str(e)}")
 
 # Run the bot
-if __name__ == "__main__":
-    try:
-        logging.info("🚀 Bot is starting...")
-        bot.run()  # Start the bot
-    except Exception as e:
-        logging.critical(f"Bot failed to start: {e}")
+print("🚀 Bot is running...")
+bot.run()
