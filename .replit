@@ -8,4 +8,4 @@ run = ["python3", "bot.py"]
 # Optionally, specify environment variables
 [run.env]
 # Replace with your actual bot token or other environment variables
-BOT_TOKEN = "your-telegram-bot-token"
+BOT_TOKEN = "7620991709:AAEaPfZWjauYBN5zU1d64RYiwqPPiM-3gjA"
