@@ -8,3 +8,4 @@ instaloader
 python-telegram-bot
 requests
 ffmpeg-python
+YoutubeDL
